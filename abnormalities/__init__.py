@@ -19,15 +19,10 @@ __name__ = 'abnormalities'
 __author = 'Kris'
 
 
-def _error_callback(*args):
+def _error_callback(callback, need_exit, ignore_exceptions, error):
     """
     end of process callback...
     """
-    callback = args[0]
-    need_exit = args[1]
-    ignore_exceptions = args[2]
-    error = args[3]
-
     if type(error) in ignore_exceptions:
         raise
 
@@ -53,7 +48,12 @@ def _out_wrapper(
         return func(*args, **kwargs)
     except exceptions as error:
         # If in ignore exceptions, pass error
-        return _error_callback(callback, need_exit, ignore_exceptions, error)
+        return _error_callback(
+            callback=callback,
+            need_exit=need_exit,
+            ignore_exceptions=ignore_exceptions,
+            error=error
+        )
 
 
 async def _async_out_wrapper(
@@ -69,7 +69,12 @@ async def _async_out_wrapper(
         return await func(*args, **kwargs)
     except exceptions as error:
         # If in ignore exceptions, pass error
-        return _error_callback(callback, need_exit, ignore_exceptions, error)
+        return _error_callback(
+            callback=callback,
+            need_exit=need_exit,
+            ignore_exceptions=ignore_exceptions,
+            error=error
+        )
 
 
 def exception_hook(
@@ -88,11 +93,11 @@ def exception_hook(
             @wraps(func)
             async def wrapper(*args, **kwargs):
                 return await _async_out_wrapper(
-                    func,
-                    exceptions,
-                    callback,
-                    need_exit,
-                    ignore_exceptions,
+                    func=func,
+                    exceptions=exceptions,
+                    callback=callback,
+                    need_exit=need_exit,
+                    ignore_exceptions=ignore_exceptions,
                     *args,
                     **kwargs
                 )
@@ -100,11 +105,11 @@ def exception_hook(
             @wraps(func)
             def wrapper(*args, **kwargs):
                 return _out_wrapper(
-                    func,
-                    exceptions,
-                    callback,
-                    need_exit,
-                    ignore_exceptions,
+                    func=func,
+                    exceptions=exceptions,
+                    callback=callback,
+                    need_exit=need_exit,
+                    ignore_exceptions=ignore_exceptions,
                     *args,
                     **kwargs
                 )
@@ -152,12 +157,12 @@ def exception_hook_class(
             def set_wrapper_async(self, func):
                 async def wrapper(*args, **kwargs):
                     return await _async_out_wrapper(
-                        func,
-                        exceptions,
-                        callback,
-                        need_exit,
-                        ignore_exceptions,
-                        self,
+                        func=func,
+                        exceptions=exceptions,
+                        callback=callback,
+                        need_exit=need_exit,
+                        ignore_exceptions=ignore_exceptions,
+                        self=self,
                         *args,
                         **kwargs
                     )
