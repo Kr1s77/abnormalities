@@ -7,11 +7,11 @@ with open('README.md', 'r', encoding='utf-8') as f:
 
 
 setuptools.setup(
-    name='tracer',
+    name='abnormalities',
     version='1.0',
     author='Kris Liang',
     author_email='criselyj@163.com',
-    description='path all exception functions.',
+    description='patch all exception functions.',
     url='https://github.com/Kr1s77/tracer/',
     packages=setuptools.find_packages(),
     classifiers=[

@@ -14,12 +14,12 @@ from types import (
     AsyncGeneratorType
 )
 
-__version__ = '1.0'
-__name__ = 'tracer'
+__version__ = '0.1.0'
+__name__ = 'abnormalities'
 __author = 'Kris'
 
 
-def error_callback(*args):
+def _error_callback(*args):
     """
     end of process callback...
     """
@@ -40,7 +40,7 @@ def error_callback(*args):
         exit(0)
 
 
-def out_wrapper(
+def _out_wrapper(
         func: Callable,
         exceptions: tuple,
         callback: Callable,
@@ -53,10 +53,10 @@ def out_wrapper(
         return func(*args, **kwargs)
     except exceptions as error:
         # If in ignore exceptions, pass error
-        return error_callback(callback, need_exit, ignore_exceptions, error)
+        return _error_callback(callback, need_exit, ignore_exceptions, error)
 
 
-async def async_out_wrapper(
+async def _async_out_wrapper(
         func: Callable,
         exceptions: tuple,
         callback: Callable,
@@ -69,7 +69,7 @@ async def async_out_wrapper(
         return await func(*args, **kwargs)
     except exceptions as error:
         # If in ignore exceptions, pass error
-        return error_callback(callback, need_exit, ignore_exceptions, error)
+        return _error_callback(callback, need_exit, ignore_exceptions, error)
 
 
 def exception_hook(
@@ -87,7 +87,7 @@ def exception_hook(
         if func.__code__.co_flags & 0x180:
             @wraps(func)
             async def wrapper(*args, **kwargs):
-                return await async_out_wrapper(
+                return await _async_out_wrapper(
                     func,
                     exceptions,
                     callback,
@@ -99,7 +99,7 @@ def exception_hook(
         else:
             @wraps(func)
             def wrapper(*args, **kwargs):
-                return out_wrapper(
+                return _out_wrapper(
                     func,
                     exceptions,
                     callback,
@@ -136,7 +136,7 @@ def exception_hook_class(
 
             def set_wrapper(self, func):
                 def wrapper(*args, **kwargs):
-                    return out_wrapper(
+                    return _out_wrapper(
                         func=func,
                         exceptions=exceptions,
                         callback=callback,
@@ -151,7 +151,7 @@ def exception_hook_class(
 
             def set_wrapper_async(self, func):
                 async def wrapper(*args, **kwargs):
-                    return await async_out_wrapper(
+                    return await _async_out_wrapper(
                         func,
                         exceptions,
                         callback,
@@ -192,7 +192,7 @@ def patch_all_exception(
     sample by kris: /usr/bin/python3 test func
     --------------------------------------------------------------
     # coding: utf-8
-    import patch_all_exception
+    from abnormalities import patch_all_exception
 
     def error_call_back(exc_traceback):
     print("Log: ", exc_traceback)
@@ -223,7 +223,7 @@ def patch_all_exception(
     -------------------------------------------------------------------------------------
     # coding: utf-8
     import asyncio
-    from tracer import patch_all_exception
+    from abnormalities import patch_all_exception
 
 
     def error_call_back(exc_traceback):

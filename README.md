@@ -1,14 +1,14 @@
-<h4>Tracer</h4>
+<h4>Abnormalities</h4>
 
-###### What is tracer? 
+###### What is abnormalities? 
 Tracer is a package that can capture global exceptions, and you can configure which methods will be captured by tracer. After the exceptions are captured, you need to add a callback function, and the program will automatically execute this callback function. 
 
 
-###### How to use tracer? 
-1. Use tracer hook function 
+###### How to use abnormalities? 
+1. Use abnormalities hook function 
 ```python3
 # coding: utf-8
-import patch_all_exception
+from abnormalities import patch_all_exception
 
 def error_call_back(exc_traceback):
     print("Log: ", exc_traceback)
@@ -30,7 +30,7 @@ if __name__ == '__main__':
 ```python3
 # coding: utf-8
 import asyncio
-from tracer import patch_all_exception
+from abnormalities import patch_all_exception
 
 
 def error_call_back(exc_traceback):
@@ -66,5 +66,5 @@ if __name__ == '__main__':
     asyncio.run(TModel().run())
 ```
 
-###### What did tracer solve for us? 
+###### What did abnormalities solve for us? 
 Tracer can use the callback method to call back when there is an exception in our program, and we can perform early warning and other methods after the exception, which is very convenient. 
