@@ -14,6 +14,10 @@ from types import (
     AsyncGeneratorType
 )
 
+__version__ = '1.0'
+__name__ = 'tracer'
+__author = 'Kris'
+
 
 def error_callback(*args):
     """
