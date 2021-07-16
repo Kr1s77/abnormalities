@@ -20,19 +20,26 @@ __author = 'Kris'
 
 
 def _error_callback(callback, need_exit, ignore_exceptions, error):
-    """
-    end of process callback...
-    """
+    #: Ignore exceptions while settings ignore_exceptions
     if type(error) in ignore_exceptions:
         raise
 
-    # callback function
+    #: Create Io receive error message and invoking call
+    #: back function, bring error message to this func/
     fd = StringIO()
     traceback.print_exc(file=fd)
     callback(fd.getvalue())
+
+    #: If the program is configured with the option to
+    #: exit when an error occurs, the program exits when
+    #: the exception occurs and throws the exception as
+    #: normal
     if need_exit:
-        # raise
         exit(0)
+
+    #: If there is no configuration program will work/
+    else:
+        pass
 
 
 def _out_wrapper(
@@ -43,7 +50,7 @@ def _out_wrapper(
         ignore_exceptions: tuple,
         *args: tuple,
         **kwargs: dict
-):
+) -> None:
     try:
         return func(*args, **kwargs)
     except exceptions as error:
@@ -64,7 +71,7 @@ async def _async_out_wrapper(
         ignore_exceptions: tuple,
         *args: tuple,
         **kwargs: dict
-):
+) -> None:
     try:
         return await func(*args, **kwargs)
     except exceptions as error:
@@ -83,9 +90,6 @@ def exception_hook(
         need_exit: bool,
         ignore_exceptions: tuple,
 ):
-    """Replacement function...
-    """
-
     def hook_func(func):
         # Check if 'func' is a generator function.
         # Code from types. def coroutine(func): line 244
@@ -123,7 +127,7 @@ def exception_hook_class(
         callback: Callable,
         need_exit: bool,
         ignore_exceptions: tuple,
-):
+) -> Callable:
     def hooker(cls):
         class Inner(cls):
             def __init__(self, *args, **kwargs):
@@ -270,8 +274,8 @@ def patch_all_exception(
                       except magic functions, you can directly pass locals()
     :param exceptions: Want to handle those abnormal errors, the default is BaseException
     :param need_exit: Is it necessary to exit the program if an abnormality is found
-    :param ignore_exceptions: Is it necessary to exit the program if an abnormality is found
-    :param ignore_objects: Is it necessary to exit the program if an abnormality is found
+    :param ignore_exceptions: Uncaught exception
+    :param ignore_objects: Object not captured
     :return: None
     """
     ignore_objects = ignore_objects or tuple()

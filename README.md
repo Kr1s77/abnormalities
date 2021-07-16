@@ -67,4 +67,4 @@ if __name__ == '__main__':
 ```
 
 ###### What did abnormalities solve for us? 
-Tracer can use the callback method to call back when there is an exception in our program, and we can perform early warning and other methods after the exception, which is very convenient. 
+Abnormalities can use the callback method to call back when there is an exception in our program, and we can perform early warning and other methods after the exception, which is very convenient. 
