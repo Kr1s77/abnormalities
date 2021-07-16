@@ -220,7 +220,7 @@ def patch_all_exception(
     ignore_exceptions = ignore_exceptions or tuple()
 
     hook_functions = filter(lambda x: not x.endswith('__'), objects.keys())
-    # exceptions = exceptions or (BaseException,)
+    exceptions = exceptions or (BaseException,)
 
     for func_name in hook_functions:
         if (func_name == callback.__name__ or
