@@ -18,8 +18,8 @@ __version__ = '0.1.0'
 __name__ = 'abnormalities'
 __author = 'Kris'
 
-
-# callback, need_exit, ignore_exceptions, error
+# Find without callback objects
+WITHOUT_CALLBACK_OBJECTS = []
 
 
 def _error_callback(context: dict):
@@ -85,33 +85,37 @@ def exception_hook(context: dict) -> Callable:
 
 def exception_hook_class(context: dict) -> Callable:
     def hooker(cls):
-        class Inner(cls):
-            def __init__(self, *args, **kwargs):
-                for func_name in cls.__dict__.keys():
-                    func = cls.__dict__[func_name]
-                    if not isinstance(func, FunctionType) or func_name.endswith('__'):
-                        continue
-                    # Check if 'func' is a coroutine function.
-                    if func.__code__.co_flags & 0x180:
-                        self.set_wrapper_async(func=func)
-                    else:
-                        self.set_wrapper(func)
+        try:
+            class Inner(cls):
+                def __init__(self, *args, **kwargs):
+                    for func_name in cls.__dict__.keys():
+                        func = cls.__dict__[func_name]
+                        if not isinstance(func, FunctionType) or func_name.endswith('__'):
+                            continue
+                        # Check if 'func' is a coroutine function.
+                        if func.__code__.co_flags & 0x180:
+                            self.set_wrapper_async(func=func)
+                        else:
+                            self.set_wrapper(func)
 
-                super(Inner, self).__init__(*args, **kwargs)
+                    super(Inner, self).__init__(*args, **kwargs)
 
-            def set_wrapper(self, func):
-                def wrapper(*args, **kwargs):
-                    return _out_wrapper(context, self, *args, **kwargs)
+                def set_wrapper(self, func):
+                    def wrapper(*args, **kwargs):
+                        return _out_wrapper(context, self, *args, **kwargs)
 
-                setattr(self, func.__name__, wrapper)  # rewrite function
+                    setattr(self, func.__name__, wrapper)  # rewrite function
 
-            def set_wrapper_async(self, func):
-                async def wrapper(*args, **kwargs):
-                    return await _async_out_wrapper(context, self, *args, **kwargs)
+                def set_wrapper_async(self, func):
+                    async def wrapper(*args, **kwargs):
+                        return await _async_out_wrapper(context, self, *args, **kwargs)
 
-                setattr(self, func.__name__, wrapper)  # rewrite function
+                    setattr(self, func.__name__, wrapper)  # rewrite function
 
-        return Inner
+            return Inner
+        except TypeError:
+            WITHOUT_CALLBACK_OBJECTS.append(cls)
+            return cls
 
     return hooker
 
@@ -123,7 +127,7 @@ def patch_all_exception(
         need_exit: bool = True,
         ignore_exceptions: tuple = None,
         ignore_objects: tuple = None
-):
+) -> list:
     """
     doc
     --------------------------------------------------------------
@@ -246,4 +250,4 @@ def patch_all_exception(
         else:
             objects[func_name] = exception_hook_class(context)(objects[func_name])
 
-    return None
+    return WITHOUT_CALLBACK_OBJECTS
