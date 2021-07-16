@@ -69,6 +69,62 @@ patch_all_exception(
 if __name__ == '__main__':
     asyncio.run(TModel().run())
 ```
+3. Use class function and async function
+```python3
+# _*_ coding: utf-8 _*_
+import asyncio
+from abnormalities import patch_all_exception
+
+
+def callback(error):
+    print('[*] Error: ', error)
+
+
+def sync_run(*args):
+    raise RuntimeError()
+
+
+def sync_run_t(*args):
+    raise RuntimeError()
+
+
+async def run(*args):
+    raise TypeError()
+
+
+class Runner(object):
+    def __init__(self):
+        pass
+
+    def sync_run(self):
+        raise RuntimeError()
+
+    async def run(self):
+        raise RuntimeError()
+
+
+patch_all_exception(
+    callback=callback,
+    objects=locals(),
+    exceptions=(BaseException, ),
+    ignore_exceptions=(TypeError, ),
+    need_exit=False
+)
+
+
+def main():
+    sync_run('sync_run')
+    sync_run_t('sync_run_t')
+    runner = Runner()
+    runner.sync_run()
+    asyncio.run(runner.run())
+    asyncio.run(run('run'))
+
+
+if __name__ == '__main__':
+
+    main()
+```
 
 ###### What did abnormalities solve for us? 
 Abnormalities can use the callback method to call back when there is an exception in our program, and we can perform early warning and other methods after the exception, which is very convenient. 

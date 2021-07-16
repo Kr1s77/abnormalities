@@ -19,22 +19,25 @@ __name__ = 'abnormalities'
 __author = 'Kris'
 
 
-def _error_callback(callback, need_exit, ignore_exceptions, error):
+# callback, need_exit, ignore_exceptions, error
+
+
+def _error_callback(context: dict):
     #: Ignore exceptions while settings ignore_exceptions
-    if type(error) in ignore_exceptions:
+    if type(context['error']) in context['ignore_exceptions']:
         raise
 
     #: Create Io receive error message and invoking call
     #: back function, bring error message to this func/
     fd = StringIO()
     traceback.print_exc(file=fd)
-    callback(fd.getvalue())
+    context['callback'](fd.getvalue())
 
     #: If the program is configured with the option to
     #: exit when an error occurs, the program exits when
     #: the exception occurs and throws the exception as
     #: normal
-    if need_exit:
+    if context['need_exit']:
         exit(0)
 
     #: If there is no configuration program will work/
@@ -42,92 +45,45 @@ def _error_callback(callback, need_exit, ignore_exceptions, error):
         pass
 
 
-def _out_wrapper(
-        func: Callable,
-        exceptions: tuple,
-        callback: Callable,
-        need_exit: bool,
-        ignore_exceptions: tuple,
-        *args: tuple,
-        **kwargs: dict
-) -> None:
+def _out_wrapper(context: dict, *args, **kwargs) -> None:
     try:
-        return func(*args, **kwargs)
-    except exceptions as error:
+        return context['func'](*args, **kwargs)
+    except context.get('exceptions', (BaseException,)) as error:
         # If in ignore exceptions, pass error
-        return _error_callback(
-            callback=callback,
-            need_exit=need_exit,
-            ignore_exceptions=ignore_exceptions,
-            error=error
-        )
+        context.setdefault('error', error)
+        return _error_callback(context=context)
 
 
-async def _async_out_wrapper(
-        func: Callable,
-        exceptions: tuple,
-        callback: Callable,
-        need_exit: bool,
-        ignore_exceptions: tuple,
-        *args: tuple,
-        **kwargs: dict
-) -> None:
+async def _async_out_wrapper(context: dict, *args, **kwargs) -> None:
     try:
-        return await func(*args, **kwargs)
-    except exceptions as error:
+        return await context['func'](*args, **kwargs)
+    except context.get('exceptions', (BaseException,)) as error:
         # If in ignore exceptions, pass error
-        return _error_callback(
-            callback=callback,
-            need_exit=need_exit,
-            ignore_exceptions=ignore_exceptions,
-            error=error
-        )
+        context.setdefault('error', error)
+        return _error_callback(context=context)
 
 
-def exception_hook(
-        exceptions: tuple,
-        callback: Callable,
-        need_exit: bool,
-        ignore_exceptions: tuple,
-):
+def exception_hook(context: dict) -> Callable:
     def hook_func(func):
+        # Settings context
+        context.setdefault('func', func)
+
         # Check if 'func' is a generator function.
         # Code from types. def coroutine(func): line 244
         if func.__code__.co_flags & 0x180:
             @wraps(func)
             async def wrapper(*args, **kwargs):
-                return await _async_out_wrapper(
-                    func=func,
-                    exceptions=exceptions,
-                    callback=callback,
-                    need_exit=need_exit,
-                    ignore_exceptions=ignore_exceptions,
-                    *args,
-                    **kwargs
-                )
+                return await _async_out_wrapper(context, *args, **kwargs)
         else:
             @wraps(func)
             def wrapper(*args, **kwargs):
-                return _out_wrapper(
-                    func=func,
-                    exceptions=exceptions,
-                    callback=callback,
-                    need_exit=need_exit,
-                    ignore_exceptions=ignore_exceptions,
-                    *args,
-                    **kwargs
-                )
+                return _out_wrapper(context, *args, **kwargs)
         return wrapper
 
     return hook_func
 
 
-def exception_hook_class(
-        exceptions: tuple,
-        callback: Callable,
-        need_exit: bool,
-        ignore_exceptions: tuple,
-) -> Callable:
+def exception_hook_class(context: dict) -> Callable:
     def hooker(cls):
         class Inner(cls):
             def __init__(self, *args, **kwargs):
@@ -145,31 +101,13 @@ def exception_hook_class(
 
             def set_wrapper(self, func):
                 def wrapper(*args, **kwargs):
-                    return _out_wrapper(
-                        func=func,
-                        exceptions=exceptions,
-                        callback=callback,
-                        need_exit=need_exit,
-                        ignore_exceptions=ignore_exceptions,
-                        self=self,
-                        *args,
-                        **kwargs
-                    )
+                    return _out_wrapper(context, self, *args, **kwargs)
 
                 setattr(self, func.__name__, wrapper)  # rewrite function
 
             def set_wrapper_async(self, func):
                 async def wrapper(*args, **kwargs):
-                    return await _async_out_wrapper(
-                        func=func,
-                        exceptions=exceptions,
-                        callback=callback,
-                        need_exit=need_exit,
-                        ignore_exceptions=ignore_exceptions,
-                        self=self,
-                        *args,
-                        **kwargs
-                    )
+                    return await _async_out_wrapper(context, self, *args, **kwargs)
 
                 setattr(self, func.__name__, wrapper)  # rewrite function
 
@@ -282,7 +220,7 @@ def patch_all_exception(
     ignore_exceptions = ignore_exceptions or tuple()
 
     hook_functions = filter(lambda x: not x.endswith('__'), objects.keys())
-    exceptions = exceptions or (BaseException,)
+    # exceptions = exceptions or (BaseException,)
 
     for func_name in hook_functions:
         if (func_name == callback.__name__ or
@@ -294,21 +232,18 @@ def patch_all_exception(
                 objects[func_name] in ignore_objects):
             continue
 
+        context = {
+            'exceptions': exceptions,
+            'callback': callback,
+            'need_exit': need_exit,
+            'ignore_exceptions': ignore_exceptions,
+        }
+
         # Functions
         if isinstance(objects[func_name], FunctionType):
-            objects[func_name] = exception_hook(
-                exceptions=exceptions,
-                callback=callback,
-                need_exit=need_exit,
-                ignore_exceptions=ignore_exceptions
-            )(objects[func_name])
+            objects[func_name] = exception_hook(context)(objects[func_name])
         # Classes do not need check generator
         else:
-            objects[func_name] = exception_hook_class(
-                exceptions=exceptions,
-                callback=callback,
-                need_exit=need_exit,
-                ignore_exceptions=ignore_exceptions
-            )(objects[func_name])
+            objects[func_name] = exception_hook_class(context)(objects[func_name])
 
     return None
