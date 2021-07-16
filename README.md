@@ -72,3 +72,7 @@ if __name__ == '__main__':
 
 ###### What did abnormalities solve for us? 
 Abnormalities can use the callback method to call back when there is an exception in our program, and we can perform early warning and other methods after the exception, which is very convenient. 
+
+
+###### How does it work? 
+It uses the principle of decorators, replacing all functions in the code and adding hooks to functions that return errors
