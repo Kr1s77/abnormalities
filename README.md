@@ -4,6 +4,10 @@
 Tracer is a package that can capture global exceptions, and you can configure which methods will be captured by tracer. After the exceptions are captured, you need to add a callback function, and the program will automatically execute this callback function. 
 
 
+###### How to install abnormalities?
+> pip3 install abnormalities
+
+
 ###### How to use abnormalities? 
 1. Use abnormalities hook function 
 ```python3
