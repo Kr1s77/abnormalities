@@ -8,7 +8,7 @@ with open('README.md', 'r', encoding='utf-8') as f:
 
 setuptools.setup(
     name='abnormalities',
-    version='1.0.1',
+    version='1.0.2',
     author='Kris Liang',
     author_email='criselyj@163.com',
     description='patch all exception functions.',
