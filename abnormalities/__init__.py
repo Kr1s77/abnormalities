@@ -7,6 +7,7 @@ import traceback
 from io import StringIO
 from typing import Callable
 from functools import wraps
+from functools import partial
 from types import (
     FunctionType,
     CoroutineType,
@@ -114,10 +115,19 @@ def exception_hook_class(context: dict) -> Callable:
 
             return Inner
         except TypeError:
-            WITHOUT_CALLBACK_OBJECTS.append(cls)
+            WITHOUT_CALLBACK_OBJECTS.append((cls, context))
             return cls
 
     return hooker
+
+
+def __call(func, context):
+    context.setdefault('func', func)
+
+    def wrapper(*args, **kwargs):
+        return _out_wrapper(context, *args, **kwargs)
+
+    return wrapper
 
 
 def patch_all_exception(
@@ -249,5 +259,17 @@ def patch_all_exception(
         # Classes do not need check generator
         else:
             objects[func_name] = exception_hook_class(context)(objects[func_name])
+
+    for error_func, context in WITHOUT_CALLBACK_OBJECTS:
+        if isinstance(error_func, partial):
+            replaced_func = __call(error_func.func, context)
+
+            # :partial object at class partial: line 270
+            error_func.__setstate__(
+                (replaced_func,
+                 error_func.args,
+                 error_func.keywords,
+                 error_func.__dict__)
+            )
 
     return WITHOUT_CALLBACK_OBJECTS
