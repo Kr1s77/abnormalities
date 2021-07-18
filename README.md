@@ -132,3 +132,7 @@ Abnormalities can use the callback method to call back when there is an exceptio
 
 ###### How does it work? 
 It uses the principle of decorators, replacing all functions in the code and adding hooks to functions that return errors
+
+
+##### Unsupported function
+`functools.partial`, `flask`, `fastapi`
