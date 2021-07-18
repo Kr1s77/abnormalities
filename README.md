@@ -135,4 +135,4 @@ It uses the principle of decorators, replacing all functions in the code and add
 
 
 ##### Unsupported function
-`functools.partial`, `flask`, `fastapi`
+`flask`, `fastapi`
