@@ -1,7 +1,7 @@
 <h4>Abnormalities</h4>
 
 ###### Unsupported function
-`flask`, `fastapi`
+`flask`, `fastapi`，`django`
 
 ###### What is abnormalities? 
 Tracer is a package that can capture global exceptions, and you can configure which methods will be captured by tracer. After the exceptions are captured, you need to add a callback function, and the program will automatically execute this callback function. 
